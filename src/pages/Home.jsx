@@ -1,12 +1,8 @@
-import React from 'react'
-import Chat from '@/components/Chat'    
+import React from "react";
+import Dashboard from "@/components/Dashboard";
 
 const Home = () => {
-  return (
-    <div>
-        <Chat />
-    </div>
-  )
-}
+  return <Dashboard />;
+};
 
-export default Home
+export default Home;
