@@ -78,7 +78,7 @@ export function FileUpload({ onFileUpload }) {
         <div
           {...getRootProps()}
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+            "border-2 border-dashed rounded-lg p-4 md:p-8 text-center cursor-pointer transition-colors",
             isDragActive
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25",
@@ -86,18 +86,27 @@ export function FileUpload({ onFileUpload }) {
           )}
         >
           <input {...getInputProps()} />
-          <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <Upload className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground" />
           {isDragActive ? (
-            <p className="text-lg font-medium">Drop the files here...</p>
+            <p className="text-base sm:text-lg font-medium">
+              Drop the files here...
+            </p>
           ) : (
             <div>
-              <p className="text-lg font-medium mb-2">
-                Drag & drop legal documents here
+              <p className="text-sm sm:text-base md:text-lg font-medium mb-2">
+                <span className="hidden sm:inline">
+                  Drag & drop legal documents here
+                </span>
+                <span className="sm:hidden">Drag & drop documents</span>
               </p>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 or click to select files
               </p>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
                 Choose Files
               </Button>
             </div>
@@ -106,45 +115,62 @@ export function FileUpload({ onFileUpload }) {
 
         {files.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-medium">Uploaded Files ({files.length})</h3>
+            <h3 className="font-medium text-sm sm:text-base">
+              <span className="hidden sm:inline">
+                Uploaded Files ({files.length})
+              </span>
+              <span className="sm:hidden">Files ({files.length})</span>
+            </h3>
             {files.map((fileItem) => (
               <div
                 key={fileItem.id}
-                className="flex items-center gap-3 p-3 border rounded-lg"
+                className="flex items-center gap-2 md:gap-3 p-3 border rounded-lg"
               >
-                <File className="h-8 w-8 text-blue-500" />
+                <File className="h-6 w-6 md:h-8 md:w-8 text-blue-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{fileItem.file.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium truncate text-sm md:text-base">
+                    {fileItem.file.name}
+                  </p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                   {fileItem.status === "uploading" && (
                     <Progress value={fileItem.progress} className="mt-2" />
                   )}
                 </div>
-                <Badge
-                  variant={
-                    fileItem.status === "completed"
-                      ? "default"
-                      : fileItem.status === "uploading"
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {fileItem.status === "completed" && (
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                  )}
-                  {fileItem.status}
-                </Badge>
-                {fileItem.status === "pending" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFile(fileItem.id)}
+                <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                  <Badge
+                    variant={
+                      fileItem.status === "completed"
+                        ? "default"
+                        : fileItem.status === "uploading"
+                        ? "secondary"
+                        : "outline"
+                    }
+                    className="text-xs"
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+                    {fileItem.status === "completed" && (
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                    )}
+                    <span className="hidden sm:inline">{fileItem.status}</span>
+                    <span className="sm:hidden">
+                      {fileItem.status === "completed"
+                        ? "✓"
+                        : fileItem.status === "uploading"
+                        ? "..."
+                        : "⏳"}
+                    </span>
+                  </Badge>
+                  {fileItem.status === "pending" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFile(fileItem.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
 
@@ -152,9 +178,14 @@ export function FileUpload({ onFileUpload }) {
               <Button
                 onClick={uploadFiles}
                 disabled={uploading}
-                className="w-full"
+                className="w-full text-xs sm:text-sm md:text-base"
               >
-                {uploading ? "Uploading..." : "Upload All Files"}
+                <span className="hidden sm:inline">
+                  {uploading ? "Uploading..." : "Upload All Files"}
+                </span>
+                <span className="sm:hidden">
+                  {uploading ? "Uploading..." : "Upload All"}
+                </span>
               </Button>
             )}
           </div>

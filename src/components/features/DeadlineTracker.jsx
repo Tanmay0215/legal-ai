@@ -168,7 +168,7 @@ export function DeadlineTracker() {
       <CardContent className="space-y-6">
         {/* Filters and Stats */}
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2 md:gap-2">
             {[
               { key: "all", label: "All", count: deadlines.length },
               {
@@ -194,30 +194,45 @@ export function DeadlineTracker() {
                 variant={filter === filterOption.key ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilter(filterOption.key)}
+                className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2"
               >
-                {filterOption.label} ({filterOption.count})
+                <span className="hidden sm:inline">
+                  {filterOption.label} ({filterOption.count})
+                </span>
+                <span className="sm:hidden">
+                  {filterOption.label.slice(0, 3)} {filterOption.count}
+                </span>
               </Button>
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 text-center">
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-red-600">
                 {deadlines.filter((d) => d.status === "overdue").length}
               </p>
-              <p className="text-sm text-muted-foreground">Overdue</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <span className="hidden sm:inline">Overdue</span>
+                <span className="sm:hidden">Over</span>
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-yellow-600">
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-yellow-600">
                 {deadlines.filter((d) => isUrgent(d.dueDate)).length}
               </p>
-              <p className="text-sm text-muted-foreground">Due Soon</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <span className="hidden sm:inline">Due Soon</span>
+                <span className="sm:hidden">Soon</span>
+              </p>
             </div>
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-600">
                 {deadlines.filter((d) => d.status === "completed").length}
               </p>
-              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <span className="hidden sm:inline">Completed</span>
+                <span className="sm:hidden">Done</span>
+              </p>
             </div>
           </div>
         </div>
@@ -238,11 +253,14 @@ export function DeadlineTracker() {
               )}
             >
               {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{deadline.title}</h3>
-                    <Badge variant={getPriorityColor(deadline.priority)}>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <h3 className="font-medium truncate">{deadline.title}</h3>
+                    <Badge
+                      variant={getPriorityColor(deadline.priority)}
+                      className="w-fit"
+                    >
                       {deadline.priority.toUpperCase()}
                     </Badge>
                   </div>
@@ -250,7 +268,7 @@ export function DeadlineTracker() {
                     {deadline.description}
                   </p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {getStatusIcon(deadline.status)}
                   <span
                     className={cn(
@@ -264,28 +282,30 @@ export function DeadlineTracker() {
               </div>
 
               {/* Details */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-sm">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <span>{deadline.dueDate.toLocaleDateString()}</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">
+                      {deadline.dueDate.toLocaleDateString()}
+                    </span>
                     <Badge variant="outline" className="text-xs">
                       {getTimeRemaining(deadline.dueDate)}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{deadline.assignee}</span>
+                    <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{deadline.assignee}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span>{deadline.category}</span>
+                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{deadline.category}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{deadline.location}</span>
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="truncate">{deadline.location}</span>
                   </div>
                 </div>
               </div>
@@ -305,22 +325,34 @@ export function DeadlineTracker() {
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-2">
                 {deadline.status !== "completed" && (
                   <Button
                     size="sm"
                     onClick={() => markAsCompleted(deadline.id)}
+                    className="flex-shrink-0 text-xs sm:text-sm"
                   >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Mark Complete
+                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Mark Complete</span>
+                    <span className="sm:hidden">Complete</span>
                   </Button>
                 )}
-                <Button variant="outline" size="sm">
-                  <Bell className="h-4 w-4 mr-1" />
-                  Set Reminder
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0 text-xs sm:text-sm"
+                >
+                  <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="hidden md:inline">Set Reminder</span>
+                  <span className="md:hidden">Remind</span>
                 </Button>
-                <Button variant="outline" size="sm">
-                  View Details
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-shrink-0 text-xs sm:text-sm"
+                >
+                  <span className="hidden md:inline">View Details</span>
+                  <span className="md:hidden">Details</span>
                 </Button>
               </div>
             </div>

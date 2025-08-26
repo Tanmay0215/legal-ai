@@ -140,25 +140,28 @@ export function VoiceInteraction({ onVoiceCommand, onTranscriptChange }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Voice Recording Section */}
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-3 sm:space-y-4">
           <Button
             onClick={toggleListening}
             size="lg"
             variant={isListening ? "destructive" : "default"}
             className={cn(
-              "w-20 h-20 rounded-full transition-all",
+              "w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full transition-all",
               isListening && "animate-pulse"
             )}
           >
             {isListening ? (
-              <MicOff className="h-8 w-8" />
+              <MicOff className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" />
             ) : (
-              <Mic className="h-8 w-8" />
+              <Mic className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10" />
             )}
           </Button>
 
           <div className="space-y-2">
-            <Badge variant={isListening ? "default" : "secondary"}>
+            <Badge
+              variant={isListening ? "default" : "secondary"}
+              className="text-xs sm:text-sm"
+            >
               {isListening ? "Listening..." : "Ready to listen"}
             </Badge>
 
@@ -185,8 +188,8 @@ export function VoiceInteraction({ onVoiceCommand, onTranscriptChange }) {
 
         {/* Text-to-Speech Section */}
         <div className="space-y-3 border-t pt-4">
-          <h3 className="font-medium">Text-to-Speech</h3>
-          <div className="flex gap-2">
+          <h3 className="font-medium text-sm sm:text-base">Text-to-Speech</h3>
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={() =>
                 speakText("How can I help you with your legal questions today?")
@@ -194,18 +197,25 @@ export function VoiceInteraction({ onVoiceCommand, onTranscriptChange }) {
               disabled={isSpeaking}
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
             >
               {isSpeaking ? (
-                <Pause className="h-4 w-4" />
+                <Pause className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               ) : (
-                <Play className="h-4 w-4" />
+                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               )}
-              Sample Response
+              <span className="hidden sm:inline">Sample Response</span>
+              <span className="sm:hidden">Sample</span>
             </Button>
 
             {isSpeaking && (
-              <Button onClick={stopSpeaking} variant="destructive" size="sm">
-                <VolumeX className="h-4 w-4" />
+              <Button
+                onClick={stopSpeaking}
+                variant="destructive"
+                size="sm"
+                className="text-xs sm:text-sm"
+              >
+                <VolumeX className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Stop
               </Button>
             )}
@@ -222,7 +232,7 @@ export function VoiceInteraction({ onVoiceCommand, onTranscriptChange }) {
         {/* Quick Commands */}
         <div className="space-y-3 border-t pt-4">
           <h3 className="font-medium text-sm">Quick Voice Commands:</h3>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {[
               "Upload document",
               "Check deadlines",
@@ -234,7 +244,7 @@ export function VoiceInteraction({ onVoiceCommand, onTranscriptChange }) {
                 variant="outline"
                 size="sm"
                 onClick={() => onVoiceCommand?.(command)}
-                className="text-xs"
+                className="text-xs truncate"
               >
                 "{command}"
               </Button>
