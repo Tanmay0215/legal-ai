@@ -11,8 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { initializeGemini, getGeminiService } from "@/services/gemini";
-import { config, isGeminiConfigured } from "@/config/api";
+import legalApiService from "@/services/legalApi";
 import { cn } from "@/lib/utils";
 
 function ChatMessage({ role, content, isLoading = false }) {
@@ -53,40 +52,46 @@ function ChatMessage({ role, content, isLoading = false }) {
   );
 }
 
-export default function Chat() {
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm your Legal AI assistant. Ask me anything about legal matters.",
-    },
-  ]);
+export default function Chat({ hasDocument = false, documentInfo = null }) {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [apiKey, setApiKey] = useState(config.gemini.apiKey);
   const [error, setError] = useState("");
   const viewportRef = useRef(null);
 
-  // Initialize Gemini service when API key is available
+  // Update initial message when document status changes
   useEffect(() => {
-    if (apiKey) {
+    const initialMessage = {
+      role: "assistant",
+      content: hasDocument
+        ? `Hi! I'm ready to answer questions about your uploaded document: ${
+            documentInfo?.fileName || "your document"
+          }.`
+        : "Hi! I'm your Legal AI assistant. Please upload a PDF document first, then ask me questions about it.",
+    };
+
+    setMessages([initialMessage]);
+  }, [hasDocument, documentInfo?.fileName]);
+
+  // Check if backend is available
+  useEffect(() => {
+    const checkBackend = async () => {
       try {
-        initializeGemini(apiKey);
+        await legalApiService.healthCheck();
         setError("");
       } catch (err) {
-        setError("Failed to initialize Gemini service");
+        setError(
+          "Backend API is not available. Please ensure the server is running."
+        );
       }
-    }
-  }, [apiKey]);
+    };
+
+    checkBackend();
+  }, []);
 
   async function handleSend() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
-
-    if (!apiKey) {
-      setError("Please enter your Gemini API key first");
-      return;
-    }
 
     const userMessage = { role: "user", content: trimmed };
     setMessages((prev) => [...prev, userMessage]);
@@ -99,29 +104,45 @@ export default function Chat() {
     setMessages((prev) => [...prev, loadingMessage]);
 
     try {
-      const geminiService = getGeminiService();
-      const response = await geminiService.generateContent(trimmed, messages);
+      const response = await legalApiService.askQuestion(trimmed);
+
+      if (!response.success) {
+        throw new Error(response.answer || "Failed to get response");
+      }
 
       // Replace loading message with actual response
       setMessages((prev) => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = {
           role: "assistant",
-          content: response,
+          content: response.answer,
           isLoading: false,
         };
         return newMessages;
       });
+
+      // Chat was successful (document is available)
     } catch (err) {
-      console.error("Error calling Gemini:", err);
-      setError(err.message || "Failed to get response from AI");
+      console.error("Error calling chat API:", err);
+      let errorMessage = err.message || "Failed to get response from AI";
+
+      // Handle specific error cases
+      if (
+        err.message.includes("No documents uploaded") ||
+        err.message.includes("Chatbot not initialized")
+      ) {
+        errorMessage =
+          "Please upload a PDF document first before asking questions.";
+      }
+
+      setError(errorMessage);
 
       // Replace loading message with error
       setMessages((prev) => {
         const newMessages = [...prev];
         newMessages[newMessages.length - 1] = {
           role: "assistant",
-          content: "I apologize, but I encountered an error. Please try again.",
+          content: errorMessage,
           isLoading: false,
         };
         return newMessages;
@@ -140,28 +161,22 @@ export default function Chat() {
     <Card className="w-full h-full flex flex-col">
       <CardHeader className="border-b flex-shrink-0">
         <CardTitle>Legal AI Chat</CardTitle>
-        {!apiKey && (
-          <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
-            <label className="text-sm md:text-base font-medium">
-              Gemini API Key:
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your Gemini API key..."
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md text-sm md:text-base focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            />
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Get your API key from{" "}
-              <a
-                href="https://makersuite.google.com/app/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline transition-colors"
-              >
-                Google AI Studio
-              </a>
+        {!hasDocument && (
+          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              Upload a PDF document using the File Upload tab to start chatting
+              about it.
+            </p>
+          </div>
+        )}
+        {hasDocument && documentInfo && (
+          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-sm text-green-800">
+              <strong>Document loaded:</strong> {documentInfo.fileName}
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              Type: {documentInfo.documentType} | Confidence:{" "}
+              {(documentInfo.confidence * 100).toFixed(1)}%
             </p>
           </div>
         )}
@@ -187,9 +202,7 @@ export default function Chat() {
       </CardContent>
       <CardFooter className="gap-2 sm:gap-3 flex-shrink-0 p-3 sm:p-4 md:p-6">
         <Textarea
-          placeholder={
-            apiKey ? "Type your message..." : "Please enter API key first..."
-          }
+          placeholder="Ask a question about your uploaded document..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -198,7 +211,7 @@ export default function Chat() {
               handleSend();
             }
           }}
-          disabled={!apiKey || isLoading}
+          disabled={isLoading}
           className="min-h-[40px] sm:min-h-[44px] md:min-h-[48px] resize-none text-sm sm:text-base"
         />
         <Button

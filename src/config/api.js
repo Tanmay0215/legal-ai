@@ -1,11 +1,11 @@
-// Configuration for API keys and endpoints
+// Configuration for API endpoints
 export const config = {
-  gemini: {
-    apiKey: import.meta.env.VITE_GEMINI_API_KEY || "",
+  legalApi: {
+    baseUrl: import.meta.env.VITE_LEGAL_API_URL || "http://localhost:8000",
   },
 };
 
-// Helper to check if API key is configured
-export function isGeminiConfigured() {
-  return Boolean(config.gemini.apiKey);
+// Helper to check if Legal API is configured
+export function isLegalApiConfigured() {
+  return Boolean(config.legalApi.baseUrl);
 }

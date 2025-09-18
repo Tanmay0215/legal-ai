@@ -12,6 +12,9 @@ export function DashboardLayout({
   setActiveTab,
   activeFeature,
   activeComponent,
+  hasUploadedDocument,
+  uploadedDocumentInfo,
+  handleDocumentUpload,
 }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -42,7 +45,13 @@ export function DashboardLayout({
         />
 
         {/* Feature Content */}
-        <DashboardContent activeComponent={activeComponent} />
+        <DashboardContent
+          activeComponent={activeComponent}
+          activeTab={activeTab}
+          hasUploadedDocument={hasUploadedDocument}
+          uploadedDocumentInfo={uploadedDocumentInfo}
+          handleDocumentUpload={handleDocumentUpload}
+        />
 
         {/* Footer */}
         <DashboardFooter />

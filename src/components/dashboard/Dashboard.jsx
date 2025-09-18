@@ -11,6 +11,9 @@ export default function Dashboard() {
     features,
     activeFeature,
     activeComponent,
+    hasUploadedDocument,
+    uploadedDocumentInfo,
+    handleDocumentUpload,
   } = useDashboard();
 
   return (
@@ -22,6 +25,9 @@ export default function Dashboard() {
       setActiveTab={setActiveTab}
       activeFeature={activeFeature}
       activeComponent={activeComponent}
+      hasUploadedDocument={hasUploadedDocument}
+      uploadedDocumentInfo={uploadedDocumentInfo}
+      handleDocumentUpload={handleDocumentUpload}
     />
   );
 }

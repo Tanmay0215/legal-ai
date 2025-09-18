@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Upload, File, X, CheckCircle } from "lucide-react";
+import { Upload, File, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import legalApiService from "@/services/legalApi";
 
 export function FileUpload({ onFileUpload }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadResults, setUploadResults] = useState({});
 
   const onDrop = useCallback((acceptedFiles) => {
     const newFiles = acceptedFiles.map((file) => ({
@@ -25,12 +27,8 @@ export function FileUpload({ onFileUpload }) {
     onDrop,
     accept: {
       "application/pdf": [".pdf"],
-      "application/msword": [".doc"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        [".docx"],
-      "text/plain": [".txt"],
     },
-    multiple: true,
+    multiple: false, // API only supports single file upload
   });
 
   const removeFile = (id) => {
@@ -42,24 +40,75 @@ export function FileUpload({ onFileUpload }) {
 
     for (let fileItem of files) {
       if (fileItem.status === "pending") {
-        // Simulate upload progress
-        for (let progress = 0; progress <= 100; progress += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        try {
+          // Update status to uploading
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileItem.id
+                ? { ...f, status: "uploading", progress: 0 }
+                : f
+            )
+          );
+
+          // Simulate progress while uploading
+          const progressInterval = setInterval(() => {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileItem.id && f.progress < 90
+                  ? { ...f, progress: f.progress + 10 }
+                  : f
+              )
+            );
+          }, 200);
+
+          // Upload file using real API
+          const result = await legalApiService.uploadPdf(fileItem.file);
+
+          clearInterval(progressInterval);
+
+          // Update file status based on result
           setFiles((prev) =>
             prev.map((f) =>
               f.id === fileItem.id
                 ? {
                     ...f,
-                    progress,
-                    status: progress === 100 ? "completed" : "uploading",
+                    progress: 100,
+                    status: result.success ? "completed" : "error",
                   }
                 : f
             )
           );
-        }
 
-        // Call the callback if provided
-        onFileUpload?.(fileItem.file);
+          // Store upload result
+          setUploadResults((prev) => ({
+            ...prev,
+            [fileItem.id]: result,
+          }));
+
+          // Call the callback if provided and upload was successful
+          if (result.success) {
+            onFileUpload?.(fileItem.file, result);
+          }
+        } catch (error) {
+          console.error("Upload failed:", error);
+
+          // Update file status to error
+          setFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileItem.id ? { ...f, status: "error", progress: 0 } : f
+            )
+          );
+
+          // Store error result
+          setUploadResults((prev) => ({
+            ...prev,
+            [fileItem.id]: {
+              success: false,
+              message: error.message || "Upload failed",
+              error: true,
+            },
+          }));
+        }
       }
     }
 
@@ -95,12 +144,12 @@ export function FileUpload({ onFileUpload }) {
             <div>
               <p className="text-sm sm:text-base md:text-lg font-medium mb-2">
                 <span className="hidden sm:inline">
-                  Drag & drop legal documents here
+                  Drag & drop PDF documents here
                 </span>
-                <span className="sm:hidden">Drag & drop documents</span>
+                <span className="sm:hidden">Drag & drop PDF</span>
               </p>
               <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                or click to select files
+                or click to select PDF file (single file only)
               </p>
               <Button
                 variant="outline"
@@ -145,6 +194,8 @@ export function FileUpload({ onFileUpload }) {
                         ? "default"
                         : fileItem.status === "uploading"
                         ? "secondary"
+                        : fileItem.status === "error"
+                        ? "destructive"
                         : "outline"
                     }
                     className="text-xs"
@@ -152,16 +203,22 @@ export function FileUpload({ onFileUpload }) {
                     {fileItem.status === "completed" && (
                       <CheckCircle className="h-3 w-3 mr-1" />
                     )}
+                    {fileItem.status === "error" && (
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                    )}
                     <span className="hidden sm:inline">{fileItem.status}</span>
                     <span className="sm:hidden">
                       {fileItem.status === "completed"
                         ? "✓"
                         : fileItem.status === "uploading"
                         ? "..."
+                        : fileItem.status === "error"
+                        ? "✗"
                         : "⏳"}
                     </span>
                   </Badge>
-                  {fileItem.status === "pending" && (
+                  {(fileItem.status === "pending" ||
+                    fileItem.status === "error") && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -174,6 +231,49 @@ export function FileUpload({ onFileUpload }) {
               </div>
             ))}
 
+            {/* Upload Results */}
+            {files.some(
+              (f) => f.status === "completed" || f.status === "error"
+            ) && (
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Upload Results</h4>
+                {files
+                  .filter(
+                    (f) => f.status === "completed" || f.status === "error"
+                  )
+                  .map((fileItem) => {
+                    const result = uploadResults[fileItem.id];
+                    if (!result) return null;
+
+                    return (
+                      <div
+                        key={`result-${fileItem.id}`}
+                        className={cn(
+                          "p-3 rounded-lg border text-sm",
+                          result.success
+                            ? "bg-green-50 border-green-200 text-green-800"
+                            : "bg-red-50 border-red-200 text-red-800"
+                        )}
+                      >
+                        <p className="font-medium mb-1">{fileItem.file.name}</p>
+                        {result.success ? (
+                          <>
+                            <p>Document Type: {result.document_type}</p>
+                            <p>
+                              Confidence: {(result.confidence * 100).toFixed(1)}
+                              %
+                            </p>
+                            <p className="text-xs mt-1">{result.message}</p>
+                          </>
+                        ) : (
+                          <p>{result.message}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+
             {files.some((f) => f.status === "pending") && (
               <Button
                 onClick={uploadFiles}
@@ -181,10 +281,10 @@ export function FileUpload({ onFileUpload }) {
                 className="w-full text-xs sm:text-sm md:text-base"
               >
                 <span className="hidden sm:inline">
-                  {uploading ? "Uploading..." : "Upload All Files"}
+                  {uploading ? "Uploading..." : "Upload File"}
                 </span>
                 <span className="sm:hidden">
-                  {uploading ? "Uploading..." : "Upload All"}
+                  {uploading ? "Uploading..." : "Upload"}
                 </span>
               </Button>
             )}

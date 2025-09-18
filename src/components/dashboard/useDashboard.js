@@ -21,8 +21,10 @@ import { TimelineView } from "../features/TimelineView";
 import { RiskScoring } from "../features/RiskScoring";
 
 export function useDashboard() {
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("upload"); // Start with upload tab
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
+  const [hasUploadedDocument, setHasUploadedDocument] = useState(false);
+  const [uploadedDocumentInfo, setUploadedDocumentInfo] = useState(null);
 
   const features = [
     {
@@ -103,6 +105,21 @@ export function useDashboard() {
   const activeFeature = features.find((f) => f.id === activeTab);
   const activeComponent = activeFeature?.component;
 
+  // Handle successful document upload
+  const handleDocumentUpload = (file, result) => {
+    if (result.success) {
+      setHasUploadedDocument(true);
+      setUploadedDocumentInfo({
+        fileName: file.name,
+        documentType: result.document_type,
+        confidence: result.confidence,
+        uploadTime: new Date().toISOString(),
+      });
+      // Automatically switch to chat tab after successful upload
+      setActiveTab("chat");
+    }
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -111,5 +128,8 @@ export function useDashboard() {
     features,
     activeFeature,
     activeComponent,
+    hasUploadedDocument,
+    uploadedDocumentInfo,
+    handleDocumentUpload,
   };
 }
