@@ -1,61 +1,11 @@
 // Legal Document Assistant API Service
-const API_BASE_URL = "http://localhost:8000";
-
-// Type definitions for TypeScript-like documentation
-/**
- * @typedef {Object} UploadResponse
- * @property {boolean} success
- * @property {string} document_type
- * @property {number} confidence
- * @property {string} message
- */
-
-/**
- * @typedef {Object} ChatRequest
- * @property {string} question
- */
-
-/**
- * @typedef {Object} ChatResponse
- * @property {string} answer
- * @property {boolean} success
- */
-
-/**
- * @typedef {Object} HealthResponse
- * @property {string} message
- * @property {string} status
- */
+const API_BASE_URL = import.meta.env.VITE_LEGAL_API_URL || "http://localhost:8000";
 
 export class LegalApiService {
   constructor(baseUrl = API_BASE_URL) {
     this.baseUrl = baseUrl;
   }
 
-  /**
-   * Health check endpoint
-   * @returns {Promise<HealthResponse>}
-   */
-  async healthCheck() {
-    try {
-      const response = await fetch(`${this.baseUrl}/`);
-      if (!response.ok) {
-        throw new Error(
-          `Health check failed: ${response.status} ${response.statusText}`
-        );
-      }
-      return await response.json();
-    } catch (error) {
-      console.error("Health check error:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Upload a PDF file for processing
-   * @param {File} file - PDF file to upload
-   * @returns {Promise<UploadResponse>}
-   */
   async uploadPdf(file) {
     if (!file) {
       throw new Error("File is required");
@@ -87,11 +37,6 @@ export class LegalApiService {
     }
   }
 
-  /**
-   * Ask a question about the uploaded document
-   * @param {string} question - Question to ask
-   * @returns {Promise<ChatResponse>}
-   */
   async askQuestion(question) {
     if (!question || typeof question !== "string" || question.trim() === "") {
       throw new Error("Question is required");
@@ -123,12 +68,6 @@ export class LegalApiService {
     }
   }
 
-  /**
-   * Combined upload and chat workflow
-   * @param {File} file - PDF file to upload
-   * @param {string} question - Question to ask about the document
-   * @returns {Promise<string>} Answer from the chat
-   */
   async uploadAndChat(file, question) {
     const uploadResult = await this.uploadPdf(file);
 
