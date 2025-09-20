@@ -73,22 +73,6 @@ export default function Chat({ hasDocument = false, documentInfo = null }) {
     setMessages([initialMessage]);
   }, [hasDocument, documentInfo?.fileName]);
 
-  // Check if backend is available
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        await legalApiService.healthCheck();
-        setError("");
-      } catch (err) {
-        setError(
-          "Backend API is not available. Please ensure the server is running."
-        );
-      }
-    };
-
-    checkBackend();
-  }, []);
-
   async function handleSend() {
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
@@ -176,7 +160,7 @@ export default function Chat({ hasDocument = false, documentInfo = null }) {
             </p>
             <p className="text-xs text-green-600 mt-1">
               Type: {documentInfo.documentType} | Confidence:{" "}
-              {(documentInfo.confidence * 100).toFixed(1)}%
+              {(documentInfo.confidence).toFixed(1)}%
             </p>
           </div>
         )}

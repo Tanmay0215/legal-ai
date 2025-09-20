@@ -260,7 +260,7 @@ export function FileUpload({ onFileUpload }) {
                           <>
                             <p>Document Type: {result.document_type}</p>
                             <p>
-                              Confidence: {(result.confidence * 100).toFixed(1)}
+                              Confidence: {(result.confidence).toFixed(1)}
                               %
                             </p>
                             <p className="text-xs mt-1">{result.message}</p>
